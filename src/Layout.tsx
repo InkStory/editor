@@ -1,6 +1,18 @@
-import { Box, Grid, Paper, Stack, Typography } from "@mui/material";
+import { useState } from "react";
+import { Box, Divider, Grid, Paper, Stack } from "@mui/material";
+
+import { type ControlKey, Controls } from "./components/Controls";
+import { Media } from "./components/Media";
+import { Waveform } from "./components/Waveform";
+import { Size } from "./components/Size";
+import { Templates } from "./components/Templates";
+import { Background } from "./components/Background";
+import { Text } from "./components/Text";
+import { Canvas } from "./components/Canvas";
 
 export function Layout() {
+  const [section, setSection] = useState<ControlKey>("media");
+
   return (
     <Box
       sx={{
@@ -16,28 +28,40 @@ export function Layout() {
       >
         <Grid
           size={{ xs: 12, md: 4 }}
-          sx={{ height: { xs: "60%", md: "100%" } }}
+          sx={{
+            height: { xs: "60%", md: "100%" },
+            borderRight: { xs: "none", md: "1px solid" },
+            borderColor: { md: "divider" },
+            boxSizing: "border-box",
+            overflow: "hidden",
+          }}
         >
           <Stack sx={{ height: "100%" }}>
             <Paper
               elevation={1}
-              sx={{ height: { xs: "10%", md: "40%" } }}
-              style={{ backgroundColor: "#1A2027" }}
+              sx={{
+                height: { xs: "15%", md: "40%" },
+                overflowY: "auto",
+              }}
               square
             >
-              <Typography variant="body1" component="p">
-                controls
-              </Typography>
+              <Controls section={section} setSection={setSection} />
             </Paper>
+            <Divider sx={{ my: 1 }} />
             <Paper
               elevation={0}
-              sx={{ height: { xs: "90%", md: "60%" } }}
-              style={{ backgroundColor: "#1A2027" }}
+              sx={{
+                height: { xs: "85%", md: "60%" },
+                overflowY: "auto",
+              }}
               square
             >
-              <Typography variant="body1" component="p">
-                menu
-              </Typography>
+              {section === "media" && <Media />}
+              {section === "waveform" && <Waveform />}
+              {section === "size" && <Size />}
+              {section === "templates" && <Templates />}
+              {section === "background" && <Background />}
+              {section === "text" && <Text />}
             </Paper>
           </Stack>
         </Grid>
@@ -45,15 +69,8 @@ export function Layout() {
           size={{ xs: 12, md: 8 }}
           sx={{ height: { xs: "40%", md: "100%" } }}
         >
-          <Paper
-            elevation={0}
-            sx={{ height: "100%" }}
-            style={{ backgroundColor: "#1A2027" }}
-            square
-          >
-            <Typography variant="body1" component="p">
-              canvas
-            </Typography>
+          <Paper elevation={0} sx={{ height: "100%" }} square>
+            <Canvas />
           </Paper>
         </Grid>
       </Grid>
