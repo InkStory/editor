@@ -74,10 +74,22 @@ export function Controls({ section, setSection }: ControlsProps) {
       sx={{
         display: "flex",
         flexDirection: { xs: "row", md: "column" },
+        // allow horizontal scrolling only on small screens; prevent vertical scroll which
+        // can interfere with touch gestures and cause the UI to feel stuck
         overflowX: "auto",
-        overflowY: "auto",
+        overflowY: { xs: "hidden", md: "auto" },
         gap: { xs: 1, md: 1.5 },
         height: "100%",
+        // enable smooth momentum scrolling on iOS
+        WebkitOverflowScrolling: "touch",
+        // prefer horizontal pan on touch devices
+        touchAction: { xs: "pan-x", md: "auto" },
+        // enable scroll snap on mobile so items align nicely and scrolling feels natural
+        scrollSnapType: { xs: "x mandatory", md: "none" },
+        // give a bit of horizontal padding so items aren't flush to the edge
+        px: { xs: 1, md: 0 },
+        // hide the default webkit scrollbar for cleaner look on mobile
+        "&::-webkit-scrollbar": { display: { xs: "none", md: "block" } },
       }}
     >
       {ITEMS.map((item) => {
@@ -100,6 +112,7 @@ export function Controls({ section, setSection }: ControlsProps) {
               justifyContent: { xs: "center", md: "flex-start" },
               textAlign: { xs: "center", md: "left" },
               "&:hover": { bgcolor: "action.hover" },
+              // ensure items don't shrink on small screens so horizontal scroll works reliably
               flexShrink: { xs: 0, md: 1 },
               scrollSnapAlign: { xs: "center", md: "none" },
               minWidth: { xs: 88, md: "auto" },
