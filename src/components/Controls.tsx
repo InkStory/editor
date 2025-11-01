@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Box, ButtonBase, Typography } from "@mui/material";
+import { useRef, useEffect } from "react";
 
 import WavesIcon from "@mui/icons-material/ShowChart";
 import MediaIcon from "@mui/icons-material/AudioFile";
@@ -69,8 +70,63 @@ type ControlsProps = {
 };
 
 export function Controls({ section, setSection }: ControlsProps) {
+  // Small passive touch-listener detects horizontal drags so clicks are suppressed
+  // while a user is scrolling the bar. This keeps native scrolling behavior and
+  // avoids reimplementing drag-to-scroll.
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let startX = 0;
+    const THRESHOLD = 6; // pixels
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX;
+      isDraggingRef.current = false;
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - startX;
+      if (Math.abs(dx) > THRESHOLD) {
+        isDraggingRef.current = true;
+      }
+    };
+
+    const onTouchEnd = () => {
+      // small delay so immediate click after lift doesn't fire
+      setTimeout(() => {
+        isDraggingRef.current = false;
+      }, 50);
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart as EventListener);
+      el.removeEventListener("touchmove", onTouchMove as EventListener);
+      el.removeEventListener("touchend", onTouchEnd as EventListener);
+    };
+  }, []);
+
+  const onItemClick = (key: ControlKey, e: React.MouseEvent) => {
+    if (isDraggingRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    setSection(key);
+  };
+
   return (
     <Box
+      ref={containerRef}
       sx={{
         display: "flex",
         flexDirection: { xs: "row", md: "column" },
@@ -82,12 +138,17 @@ export function Controls({ section, setSection }: ControlsProps) {
         height: "100%",
         // enable smooth momentum scrolling on iOS
         WebkitOverflowScrolling: "touch",
-        // prefer horizontal pan on touch devices
+        // let the browser handle horizontal panning natively
         touchAction: { xs: "pan-x", md: "auto" },
         // enable scroll snap on mobile so items align nicely and scrolling feels natural
         scrollSnapType: { xs: "x mandatory", md: "none" },
         // give a bit of horizontal padding so items aren't flush to the edge
         px: { xs: 1, md: 0 },
+        // prevent text selection while dragging
+        userSelect: { xs: "none", md: "auto" },
+        WebkitUserSelect: { xs: "none", md: "auto" },
+        // keep overscroll within the container to avoid parent scrolling
+        overscrollBehavior: { xs: "contain", md: "auto" },
         // hide the default webkit scrollbar for cleaner look on mobile
         "&::-webkit-scrollbar": { display: { xs: "none", md: "block" } },
       }}
@@ -98,7 +159,7 @@ export function Controls({ section, setSection }: ControlsProps) {
         return (
           <ButtonBase
             key={item.key}
-            onClick={() => setSection(item.key)}
+            onClick={(e) => onItemClick(item.key, e)}
             aria-pressed={isActive}
             sx={{
               display: "flex",
@@ -116,6 +177,8 @@ export function Controls({ section, setSection }: ControlsProps) {
               flexShrink: { xs: 0, md: 1 },
               scrollSnapAlign: { xs: "center", md: "none" },
               minWidth: { xs: 88, md: "auto" },
+              // let touches on buttons still allow native pan gestures
+              touchAction: { xs: "manipulation", md: "auto" },
               bgcolor: isActive
                 ? { xs: "transparent", md: "action.selected" }
                 : undefined,
